@@ -1,0 +1,1995 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="app_title">برنامج المصطفى للترانزيت والمحاسبة - الإصدار المطور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- مكتبة تصدير الإكسل الاحترافي SheetJS -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * { box-sizing: border-box; font-family: 'Cairo', sans-serif; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        :root {
+            --bg-main: #030712;
+            --bg-sidebar: rgba(15, 23, 42, 0.95);
+            --bg-card: rgba(30, 41, 59, 0.75);
+            --border-color: rgba(56, 189, 248, 0.2);
+            --silver-gradient: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+            --accent-silver: #f1f5f9;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --vibrant-glow: 0 0 35px rgba(14, 165, 233, 0.2);
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+        }
+
+        body {
+            background: var(--bg-main);
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(14, 165, 233, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 90% 90%, rgba(37, 99, 235, 0.1) 0%, transparent 45%);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        @keyframes fadeInScale {
+            0% { opacity: 0; transform: scale(0.98) translateY(8px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @keyframes pulseLogoFloat {
+            0%, 100% { transform: translateY(0) scale(1); box-shadow: 0 0 20px rgba(14, 165, 233, 0.4); }
+            50% { transform: translateY(-4px) scale(1.02); box-shadow: 0 0 30px rgba(37, 99, 235, 0.6); }
+        }
+
+        /* Toast Notifications */
+        #toast-container {
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .toast {
+            pointer-events: auto;
+            min-width: 280px;
+            padding: 14px 20px;
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            font-size: 13.5px;
+            font-weight: 700;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: fadeInScale 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .toast.success { border-color: var(--success-color); border-right: 5px solid var(--success-color); }
+        .toast.error { border-color: var(--danger-color); border-right: 5px solid var(--danger-color); }
+        .toast.info { border-color: #38bdf8; border-right: 5px solid #38bdf8; }
+
+        .landing-page-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            min-height: 100vh;
+            animation: fadeInScale 0.5s ease-out;
+        }
+
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 40px 32px;
+            border-radius: 28px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7), var(--vibrant-glow);
+            width: 440px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        
+        .brand-logo {
+            width: 90px;
+            height: 90px;
+            background: var(--silver-gradient);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 24px;
+            margin: 0 auto 18px auto;
+            animation: pulseLogoFloat 4s ease-in-out infinite;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.4);
+            font-size: 28px;
+            font-weight: 900;
+            line-height: 1.2;
+            padding: 10px;
+        }
+        .brand-logo span { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; margin-top: 4px; color: #e0f2fe; text-transform: uppercase; }
+
+        .auth-brand-badge {
+            background: rgba(15, 23, 42, 0.8);
+            color: var(--accent-silver);
+            padding: 8px 16px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .whatsapp-link-badge { color: #34d399 !important; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+        .whatsapp-link-badge:hover { transform: scale(1.05); }
+
+        h2 { margin-bottom: 8px; color: #f8fafc; font-size: 25px; font-weight: 800; }
+        p { font-size: 13.5px; color: var(--text-muted); margin-bottom: 22px; line-height: 1.6; }
+        
+        .input-group { text-align: right; margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 12px; color: var(--accent-silver); font-weight: 700; margin-bottom: 6px; }
+
+        input, select {
+            width: 100%;
+            padding: 13px 16px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            background-color: rgba(15, 23, 42, 0.85);
+            color: #fff;
+            font-size: 13.5px;
+            outline: none;
+        }
+        input:focus, select:focus { 
+            border-color: #38bdf8; 
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.25); 
+            background-color: rgba(15, 23, 42, 0.95);
+        }
+        select option { background-color: #0f172a; color: #fff; }
+        
+        .main-btn {
+            width: 100%;
+            padding: 13px;
+            background: var(--silver-gradient);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 14px;
+            box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3);
+        }
+        .main-btn:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 10px 25px rgba(14, 165, 233, 0.45); }
+
+        .features-section { max-width: 1050px; width: 100%; margin-top: 15px; padding: 20px; text-align: center; }
+        .features-section h3 { color: #38bdf8; font-size: 21px; font-weight: 800; margin-bottom: 25px; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 25px 20px;
+            border-radius: 22px;
+            backdrop-filter: blur(15px);
+            text-align: right;
+        }
+        .feature-card .icon { font-size: 28px; margin-bottom: 12px; background: rgba(56, 189, 248, 0.1); width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 14px; }
+        .feature-card h4 { color: #f8fafc; font-size: 15.5px; font-weight: 800; margin-bottom: 6px; }
+        .feature-card p { color: var(--text-muted); font-size: 12.5px; margin: 0; line-height: 1.6; }
+
+        #app-dashboard { display: none; min-height: 100vh; animation: fadeInScale 0.4s ease-out; }
+        .app-layout { display: flex; min-height: 100vh; position: relative; }
+
+        .sidebar {
+            width: 280px;
+            background: var(--bg-sidebar);
+            backdrop-filter: blur(25px);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            position: fixed;
+            top: 0; right: 0; bottom: 0;
+            z-index: 100;
+            box-shadow: -15px 0 40px rgba(0,0,0,0.5);
+            transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar.collapsed { width: 85px; padding: 20px 12px; }
+
+        .sidebar-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); margin-bottom: 16px; }
+        .sidebar-brand-box { display: flex; align-items: center; gap: 12px; overflow: hidden; }
+        .sidebar.collapsed .sidebar-brand-box { display: none; }
+
+        .sidebar-logo {
+            width: 42px; height: 42px; background: var(--silver-gradient); border-radius: 12px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            flex-shrink: 0; font-weight: 900; font-size: 14px; color: #fff; line-height: 1; padding: 2px; text-align: center;
+        }
+        .sidebar-logo span { font-size: 5px; margin-top: 1px; }
+
+        .sidebar-title h3 { margin: 0; font-size: 14px; color: #f8fafc; font-weight: 800; white-space: nowrap; }
+        .sidebar-title span { font-size: 11px; color: #38bdf8; white-space: nowrap; font-weight: 700; }
+
+        .sidebar-toggle-btn {
+            background: rgba(255, 255, 255, 0.05); color: var(--accent-silver); border: 1px solid var(--border-color);
+            width: 35px; height: 35px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0;
+        }
+        .sidebar-toggle-btn:hover { background: rgba(56, 189, 248, 0.2); color: #fff; }
+
+        .sidebar.collapsed .sidebar-header { justify-content: center; gap: 10px; }
+        .sidebar-menu-label { font-size: 11px; color: #38bdf8; font-weight: 800; margin-bottom: 10px; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; }
+        .sidebar.collapsed .sidebar-menu-label { text-align: center; font-size: 9px; }
+
+        .tabs-sidebar-container { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex-grow: 1; margin-bottom: 15px; }
+        .tabs-sidebar-container::-webkit-scrollbar { width: 4px; }
+        .tabs-sidebar-container::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.3); border-radius: 4px; }
+
+        .tab-item-wrapper {
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 14px; overflow: hidden; padding: 4px;
+        }
+        .tab-item-wrapper.active { background: var(--silver-gradient); border-color: #38bdf8; box-shadow: 0 0 20px rgba(14, 165, 233, 0.35); }
+        
+        .nav-btn {
+            background: transparent; color: #cbd5e1; border: none; padding: 11px 12px; cursor: pointer;
+            font-size: 13px; font-weight: 700; text-align: right; flex-grow: 1; display: flex; align-items: center; gap: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .tab-item-wrapper.active .nav-btn { color: #fff; }
+        
+        .sidebar.collapsed .nav-btn span { display: none; }
+        .sidebar.collapsed .tab-item-wrapper { justify-content: center; padding: 6px; }
+        .sidebar.collapsed .nav-btn { justify-content: center; padding: 8px; }
+        .sidebar.collapsed .tab-del-btn { display: none; }
+
+        .nav-btn::before { content: '📁'; font-size: 14px; flex-shrink: 0; }
+        .tab-item-wrapper.active .nav-btn::before { content: '📂'; }
+
+        .tab-del-btn { background: transparent; color: #f87171; border: none; padding: 8px 10px; cursor: pointer; font-size: 12px; border-radius: 8px; }
+        .tab-del-btn:hover { background-color: rgba(239, 68, 68, 0.25); color: #fff; }
+
+        .sidebar-footer-actions { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border-color); }
+
+        .add-tab-btn {
+            background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 11px;
+            border-radius: 14px; cursor: pointer; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;
+        }
+        .sidebar.collapsed .add-tab-btn span:nth-child(2) { display: none; }
+        .add-tab-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        .main-content-wrapper {
+            margin-right: 280px; flex-grow: 1; padding: 25px; display: flex; flex-direction: column; gap: 20px;
+            transition: margin-right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .main-content-wrapper.expanded { margin-right: 85px; }
+
+        .top-header-bar {
+            display: flex; justify-content: space-between; align-items: center; background: var(--bg-card);
+            backdrop-filter: blur(20px); padding: 16px 22px; border-radius: 20px; border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4); flex-wrap: wrap; gap: 12px;
+        }
+
+        .header-actions-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+        .action-nav-btn {
+            padding: 10px 16px; border-radius: 14px; cursor: pointer; font-size: 12.5px; font-weight: 700; border: none; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-save-local { background: linear-gradient(135deg, #059669, #047857); color: #fff; }
+        .btn-settings { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; }
+        .btn-admin { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; display: none; }
+        .action-nav-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        .header-brand-left { display: flex; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.7); padding: 8px 16px; border-radius: 14px; border: 1px solid var(--border-color); }
+        .header-brand-info h4 { margin: 0; font-size: 13.5px; color: #f8fafc; font-weight: 800; }
+        .header-brand-info span { font-size: 11px; color: #38bdf8; font-weight: 700; }
+
+        /* KPI Quick Dashboard Cards */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        .kpi-card {
+            background: rgba(15, 23, 42, 0.75); border: 1px solid var(--border-color); border-radius: 18px; padding: 16px 20px;
+            display: flex; flex-direction: column; gap: 6px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        .kpi-card .kpi-title { font-size: 11.5px; color: var(--text-muted); font-weight: 700; }
+        .kpi-card .kpi-val { font-size: 20px; color: #38bdf8; font-weight: 900; }
+
+        .content-container {
+            background: var(--bg-card); backdrop-filter: blur(20px); padding: 28px; border-radius: 24px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5); border: 1px solid var(--border-color);
+        }
+        
+        .table-header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; }
+
+        .search-filter-box {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 18px; background: rgba(15, 23, 42, 0.6); padding: 10px 16px; border-radius: 16px; border: 1px solid var(--border-color); flex-wrap: wrap;
+        }
+        .search-filter-box input[type="text"] { background: transparent; border: none; color: #fff; font-size: 13.5px; outline: none; flex-grow: 1; min-width: 200px; }
+        .date-filter-group { display: flex; align-items: center; gap: 8px; }
+        .date-filter-group label { font-size: 11.5px; color: var(--text-muted); font-weight: 700; white-space: nowrap; }
+        .date-filter-group input[type="date"] { padding: 6px 10px; font-size: 12px; width: auto; }
+
+        .btn-group-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        
+        .add-record-btn { background: var(--silver-gradient); color: #fff; border: none; padding: 11px 20px; border-radius: 14px; cursor: pointer; font-weight: 800; font-size: 13px; }
+        .manage-fields-btn { background: rgba(51, 65, 85, 0.8); color: #f8fafc; border: 1px solid var(--border-color); padding: 11px 16px; border-radius: 14px; cursor: pointer; font-weight: 700; font-size: 13px; }
+        .add-record-btn:hover, .manage-fields-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; margin-top: 5px; border-radius: 14px; overflow: hidden; border: 1px solid var(--border-color); }
+        th, td { padding: 14px 16px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05); border-left: 1px solid rgba(255, 255, 255, 0.05); }
+        th { background-color: rgba(15, 23, 42, 0.95); color: #38bdf8; font-size: 13.5px; font-weight: 800; }
+        td { background-color: rgba(15, 23, 42, 0.4); color: #e2e8f0; }
+        tr:hover td { background-color: rgba(56, 189, 248, 0.05); }
+
+        .tbl-btn-edit { background: linear-gradient(135deg, #f59e0b, #d97706); color: #030712; border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 11.5px; }
+        .tbl-btn-del { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 11.5px; }
+        .tbl-btn-print { background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 11.5px; }
+        .tbl-btn-edit:hover, .tbl-btn-del:hover, .tbl-btn-print:hover { filter: brightness(1.1); }
+        
+        .tbl-btn-pdf { background: linear-gradient(135deg, #0ea5e9, #2563eb); color: white; text-decoration: none; padding: 5px 9px; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer; border: none; }
+
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(3, 7, 18, 0.85); backdrop-filter: blur(10px);
+            justify-content: center; align-items: center; z-index: 1000; padding: 15px;
+        }
+        .modal-card {
+            background: #0f172a; padding: 32px; border-radius: 24px; width: 620px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border-color); box-shadow: 0 25px 60px rgba(0,0,0,0.8), var(--vibrant-glow); animation: fadeInScale 0.3s ease-out;
+        }
+        .modal-card h3 { color: #38bdf8; margin-top: 0; margin-bottom: 18px; font-size: 19px; text-align: center; font-weight: 800;}
+        .modal-card label { font-size: 12px; color: var(--text-muted); display: block; margin-top: 12px; font-weight: 700;}
+        .modal-btns { display: flex; gap: 10px; margin-top: 22px; }
+
+        .field-row-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .field-row-item input, .field-row-item select { margin: 0; flex: 2; }
+        .remove-field-btn { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; padding: 11px 13px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+
+        #expired-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 7, 18, 0.95); backdrop-filter: blur(15px); z-index: 9999; justify-content: center; align-items: center; padding: 20px;
+        }
+        .expired-card { background: rgba(15, 23, 42, 0.95); border: 2px solid rgba(239, 68, 68, 0.4); padding: 40px 32px; border-radius: 28px; text-align: center; max-width: 460px; }
+
+        /* Print Receipt Professional Modern Layout */
+        @media print {
+            body * { visibility: hidden !important; }
+            #printable-receipt, #printable-receipt * { visibility: visible !important; }
+            #printable-receipt { 
+                position: absolute !important; 
+                left: 0 !important; 
+                top: 0 !important; 
+                width: 100% !important; 
+                color: #0f172a !important; 
+                background: #ffffff !important; 
+                padding: 20px !important; 
+                font-family: 'Cairo', sans-serif !important;
+                box-sizing: border-box !important;
+            }
+        }
+
+        .receipt-card-print {
+            border: 2px solid #0ea5e9;
+            border-radius: 16px;
+            padding: 25px;
+            background: #ffffff;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: none;
+        }
+
+        .receipt-header-print {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px dashed #cbd5e1;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .receipt-brand-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .receipt-logo-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            color: #ffffff;
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 18px;
+            line-height: 1.1;
+            text-align: center;
+        }
+
+        .receipt-title-box h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #0f172a;
+            font-weight: 800;
+        }
+
+        .receipt-title-box p {
+            margin: 3px 0 0 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .receipt-meta-badge {
+            text-align: left;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 10px 16px;
+            border-radius: 12px;
+        }
+
+        .receipt-meta-badge div {
+            font-size: 12px;
+            color: #475569;
+            margin-bottom: 3px;
+        }
+
+        .receipt-meta-badge strong {
+            color: #0ea5e9;
+        }
+
+        .receipt-table-styled {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .receipt-table-styled th, .receipt-table-styled td {
+            padding: 12px 16px;
+            text-align: right;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 13.5px;
+        }
+
+        .receipt-table-styled th {
+            background: #f1f5f9;
+            color: #1e293b;
+            font-weight: 800;
+            width: 35%;
+        }
+
+        .receipt-table-styled td {
+            color: #334155;
+            font-weight: 600;
+        }
+
+        .receipt-signatures-footer {
+            margin-top: 35px;
+            display: flex;
+            justify-content: space-between;
+            padding-top: 20px;
+            border-top: 2px dashed #cbd5e1;
+        }
+
+        .signature-box {
+            text-align: center;
+            width: 45%;
+        }
+
+        .signature-title {
+            font-weight: 800;
+            font-size: 13px;
+            color: #1e293b;
+            margin-bottom: 40px;
+        }
+
+        .signature-line {
+            border-bottom: 1.5px solid #94a3b8;
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { width: 85px; padding: 12px; }
+            .sidebar-brand-box, .sidebar-menu-label, .nav-btn span, .add-tab-btn span:nth-child(2) { display: none; }
+            .sidebar-header { justify-content: center; padding-bottom: 15px; }
+            .main-content-wrapper { margin-right: 85px !important; padding: 15px; }
+            .nav-btn { justify-content: center; padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <div class="landing-page-wrapper" id="auth-container">
+        <div class="auth-container">
+            <div class="card">
+                <div class="brand-logo" onclick="sendToWhatsApp()" title="KM">
+                    KM
+                </div>
+                <div class="auth-brand-badge">
+                    <span>💬 تطوير: محمد قاسم جلاد</span>
+                    <span>|</span>
+                    <a href="javascript:void(0);" onclick="sendToWhatsApp()" class="whatsapp-link-badge">📱 واتساب</a>
+                </div>
+                <h2 data-i18n="login_title">برنامج المصطفى</h2>
+                <p data-i18n="login_desc">برنامج المصطفى - لإدارة الترانزيت والمحاسبة والعمليات بكل احترافية وسهولة تامة.</p>
+                
+                <div class="input-group">
+                    <label>البريد الإلكتروني</label>
+                    <input type="email" id="auth-email" placeholder="name@gmail.com">
+                </div>
+                <div class="input-group">
+                    <label>كلمة المرور</label>
+                    <input type="password" id="auth-password" placeholder="••••••••">
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 18px;">
+                    <button class="main-btn" style="margin-top:0;" onclick="handleLogin()" data-i18n="btn_login">تسجيل الدخول</button>
+                    <button class="main-btn" style="margin-top:0; background: linear-gradient(135deg, #10b981, #059669);" onclick="handleRegister()" data-i18n="btn_register">طلب حساب جديد</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="features-section">
+            <h3>لماذا تختار برنامج المصطفى؟</h3>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="icon">⚡</div>
+                    <h4>عمل محلي بدون إنترنت</h4>
+                    <p>احفظ بياناتك واشتغل من اللابتوب أو الجوال مباشرة حتى مع انقطاع الإنترنت وبدون ضغط على السحابة.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">📊</div>
+                    <h4>تصدير إكسل مرتب</h4>
+                    <p>تصدير تقارير الجداول إلى ملفات إكسل منسقة بحقول واضحة وإجماليات دقيقة.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🔒</div>
+                    <h4>أمان ومزامنة مزدوجة</h4>
+                    <p>حفظ تلقائي محلي بذاكرة الجهاز وسحابي لمنع فقدان البيانات نهائياً في أي ظرف.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🎧</div>
+                    <h4>دعم فني مستمر</h4>
+                    <p>فريقنا جاهز لمساعدتك وتلبية استفساراتك على مدار الساعة.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="expired-overlay">
+        <div class="expired-card">
+            <div style="font-size: 50px; margin-bottom: 12px;">⏳</div>
+            <h2 style="color: #f87171; margin-bottom: 10px;">انتهت صلاحية اشتراك هذا الحساب</h2>
+            <p style="color: #cbd5e1; font-size: 13.5px; margin-bottom: 22px; line-height: 1.8;">
+                عذراً، لقد انتهت المدة المخصصة لاشتراكك في برنامج المصطفى للترانزيت والمحاسبة.<br>
+                لتجديد الاشتراك واستعادة صلاحية الوصول الفوري، يرجى التواصل مع الإدارة.
+            </p>
+            <button class="main-btn" style="background: linear-gradient(135deg, #25d366, #128c7e); font-size: 14.5px; padding: 14px;" onclick="sendToWhatsApp()">
+                💬 التواصل مع محمد قاسم جلاد للتجديد
+            </button>
+            <button class="main-btn" style="background: #334155; margin-top: 10px;" onclick="handleLogout()">تسجيل خروج</button>
+        </div>
+    </div>
+
+    <div id="app-dashboard">
+        <div class="app-layout">
+            
+            <div class="sidebar" id="sidebar-panel">
+                <div class="sidebar-header">
+                    <div class="sidebar-brand-box">
+                        <div class="sidebar-logo">
+                            KM
+                        </div>
+                        <div class="sidebar-title">
+                            <h3>برنامج المصطفى</h3>
+                            <span data-i18n="subtitle_transit">ترانزيت ومحاسبة</span>
+                        </div>
+                    </div>
+                    <button class="sidebar-toggle-btn" id="sidebar-toggle-icon" onclick="toggleSidebar()" title="إغلاق / فتح الشريط">◀</button>
+                </div>
+
+                <div class="sidebar-menu-label" data-i18n="menu_sections">الأقسام والتبويبات</div>
+                <div class="tabs-sidebar-container" id="tabs-container"></div>
+
+                <div class="sidebar-footer-actions">
+                    <button class="add-tab-btn" onclick="openAddTabModal()"><span>+</span> <span data-i18n="btn_new_tab">تبويب جديد</span></button>
+                </div>
+            </div>
+
+            <div class="main-content-wrapper" id="main-content">
+                <div class="top-header-bar">
+                    <div class="header-brand-left">
+                        <div class="header-brand-info">
+                            <h4>برنامج المصطفى</h4>
+                            <span>إدارة الترانزيت والمحاسبة</span>
+                        </div>
+                    </div>
+                    
+                    <div class="header-actions-group">
+                        <button class="action-nav-btn btn-save-local" onclick="forceSaveToDevice()">💾 حفظ بذاكرة الجهاز</button>
+                        <button class="action-nav-btn btn-settings" onclick="openSettingsModal()" data-i18n="btn_settings">⚙️ الإعدادات والنسخ الاحتياطي</button>
+                        <button class="action-nav-btn btn-admin" id="btn-admin-panel" onclick="openAdminModal()" data-i18n="btn_admin">👥 إدارة المستخدمين</button>
+                    </div>
+                </div>
+
+                <!-- KPI Quick Dashboard Cards -->
+                <div class="kpi-grid" id="kpi-summary-bar">
+                    <div class="kpi-card">
+                        <span class="kpi-title">إجمالي السجلات</span>
+                        <span class="kpi-val" id="kpi-total-records">0</span>
+                    </div>
+                    <div class="kpi-card">
+                        <span class="kpi-title">المجموع المالي العام</span>
+                        <span class="kpi-val" id="kpi-grand-total">0 $</span>
+                    </div>
+                    <div class="kpi-card">
+                        <span class="kpi-title">متوسط القيم الماليّة</span>
+                        <span class="kpi-val" id="kpi-avg-amount">0 $</span>
+                    </div>
+                    <div class="kpi-card">
+                        <span class="kpi-title">مرفقات الـ PDF</span>
+                        <span class="kpi-val" id="kpi-pdf-count">0</span>
+                    </div>
+                </div>
+
+                <div class="content-container">
+                    <div class="table-header-info">
+                        <h3 id="table-title" style="margin: 0; color: #f8fafc; font-size: 19px; font-weight: 800;">إدارة القسم</h3>
+                        <div class="btn-group-actions">
+                            <span id="records-count" style="line-height: 38px; color: var(--text-muted); font-weight: 700; font-size: 13px; margin-left: 6px;">عدد السجلات: 0</span>
+                            <button class="manage-fields-btn" onclick="openManageFieldsModal()" data-i18n="btn_manage_fields">⚙️ تعديل الحقول والعملة</button>
+                            <button class="add-record-btn" onclick="openModalForAdd()" data-i18n="btn_add_record">+ إضافة سجل جديد</button>
+                        </div>
+                    </div>
+
+                    <div class="search-filter-box">
+                        <span>🔍</span>
+                        <input type="text" id="table-search-input" placeholder="ابحث في السجلات (رقم السيارة، السائق، الملاحظات...)" oninput="renderTable()">
+                        
+                        <div class="date-filter-group">
+                            <label>من:</label>
+                            <input type="date" id="filter-date-from" onchange="renderTable()">
+                            <label>إلى:</label>
+                            <input type="date" id="filter-date-to" onchange="renderTable()">
+                            <button onclick="resetDateFilters()" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 4px 8px; font-size: 11px; cursor: pointer;">إعادة ضبط</button>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table id="main-data-table">
+                            <thead>
+                                <tr id="table-head-row"></tr>
+                            </thead>
+                            <tbody id="table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Printable Receipt Container -->
+    <div id="printable-receipt" style="display: none;">
+        <div id="receipt-details-body"></div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal-card">
+            <h3 data-i18n="modal_settings_title">⚙️ إعدادات البرنامج والنسخ الاحتياطي</h3>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 18px;" data-i18n="modal_settings_desc">تخصيص الواجهة والتحكم ببيانات النظام وحسابك الحالي والدعم الفني.</p>
+
+            <label data-i18n="lbl_email">البريد الإلكتروني المسجل:</label>
+            <input type="text" id="settings-user-email" disabled style="opacity: 0.7;">
+
+            <label style="margin-top: 15px;">💾 النسخ الاحتياطي واستعادة البيانات محلياً على الجهاز:</label>
+            <div style="display: flex; gap: 10px; margin-top: 6px;">
+                <button class="main-btn" style="margin-top:0; background: linear-gradient(135deg, #0ea5e9, #2563eb);" onclick="exportJsonBackup()">📥 تنزيل نسخة JSON على جهازك</button>
+                <button class="main-btn" style="margin-top:0; background: linear-gradient(135deg, #8b5cf6, #6d28d9);" onclick="triggerJsonImport()">📤 استعادة من ملف JSON</button>
+                <input type="file" id="json-file-input" accept=".json" style="display: none;" onchange="importJsonBackup(event)">
+            </div>
+
+            <label style="margin-top: 15px;" data-i18n="lbl_system_operations">إجراءات النظام:</label>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 6px;">
+                <button class="main-btn" style="margin-top: 0; background: linear-gradient(135deg, #059669, #047857);" onclick="exportExcel()" data-i18n="btn_excel">📊 تصدير السجلات إلى Excel مصفى ومرتب</button>
+                <button class="main-btn" style="margin-top: 0; background: linear-gradient(135deg, #f59e0b, #d97706); color: #030712;" onclick="toggleLanguage()" id="lang-btn-text">🌐 English</button>
+                <button class="main-btn" style="margin-top: 0; background: linear-gradient(135deg, #ef4444, #dc2626);" onclick="handleLogout()" data-i18n="btn_logout">🚪 تسجيل خروج نهائي</button>
+            </div>
+
+            <label style="margin-top: 15px;">معلومات المطور والدعم الفني:</label>
+            <div style="padding: 12px 16px; background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 14px; margin-top: 6px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 800; color: #f8fafc; font-size: 13px;">💬 المطور: محمد قاسم جلاد</div>
+                    <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">تواصل فوري للاستفسارات وتجديد الاشتراكات</div>
+                </div>
+                <button class="main-btn" style="margin-top: 0; width: auto; padding: 7px 12px; background: linear-gradient(135deg, #25d366, #128c7e); font-size: 11.5px;" onclick="sendToWhatsApp()">
+                    📱 تواصل واتساب
+                </button>
+            </div>
+
+            <label style="margin-top: 15px;" data-i18n="lbl_cloud_status">حالة الاتصال والعمل الحالية:</label>
+            <div id="cloud-status-badge" style="padding: 10px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 12px; color: #34d399; font-weight: 700; font-size: 12.5px; text-align: center;">
+                🟢 الحفظ محلي في ذاكرة اللابتوب/الجوال + متصل بالسحابة
+            </div>
+
+            <div class="modal-btns">
+                <button class="main-btn" style="background: #334155; margin-top: 0;" onclick="closeModal('settings-modal')" data-i18n="btn_close">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="admin-modal">
+        <div class="modal-card" style="width: 860px;">
+            <h3>لوحة إدارة المستخدمين وتواريخ التجديد اليدوي</h3>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 16px; font-size: 12.5px;">حدد تاريخ الانتهاء بدقة لكل مستخدم، ولن يتمكن أي حساب من الدخول إلا بالموافقة اليدوية وتاريخ صالح.</p>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>البريد الإلكتروني</th>
+                            <th>الحالة</th>
+                            <th>تاريخ انتهاء الصلاحية الحالي</th>
+                            <th>تحديد تاريخ جديد يدوياً</th>
+                            <th>الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-users-list"></tbody>
+                </table>
+            </div>
+            <div class="modal-btns">
+                <button class="main-btn" style="background: #334155; margin-top: 0;" onclick="closeModal('admin-modal')">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="record-modal">
+        <div class="modal-card">
+            <h3 id="modal-title">إضافة سجل جديد</h3>
+            <div id="modal-fields-container"></div>
+            
+            <label style="margin-top: 15px; color: #38bdf8;">📁 مرفق ملف PDF للشحنة (اختياري)</label>
+            <input type="file" id="modal-pdf-file-input" accept=".pdf" style="padding: 10px; background: rgba(15, 23, 42, 0.9);">
+            <div id="current-pdf-status" style="font-size: 12px; color: var(--text-muted); margin-top: 5px;"></div>
+
+            <div class="modal-btns">
+                <button class="main-btn" style="background: linear-gradient(135deg, #10b981, #059669); margin-top:0;" onclick="saveRecordData()" data-i18n="btn_save">حفظ البيانات</button>
+                <button class="main-btn" style="background: linear-gradient(135deg, #ef4444, #dc2626); margin-top:0;" onclick="closeModal('record-modal')" data-i18n="btn_cancel">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="tab-modal">
+        <div class="modal-card">
+            <h3 data-i18n="modal_new_tab_title">إنشاء تبويب (قسم) جديد</h3>
+            <label data-i18n="lbl_tab_name">اسم القسم أو التبويب</label>
+            <input type="text" id="new-tab-name-input" placeholder="مثال: حركة سيارات الترانزيت...">
+            
+            <label data-i18n="lbl_currency">العملة الخاصة بهذا القسم:</label>
+            <select id="new-tab-currency">
+                <option value="$">دولار ($)</option>
+                <option value="ل.س">ليرة سورية (ل.س)</option>
+                <option value="₺">ليرة تركية (₺)</option>
+                <option value="€">يورو (€)</option>
+                <option value="دينار">دينار</option>
+                <option value="بدون عملة">بدون عملة</option>
+            </select>
+            
+            <label style="margin-top: 15px;" data-i18n="lbl_tab_fields">الحقول الخاصة بهذا القسم:</label>
+            <div id="new-tab-fields-list">
+                <div class="field-row-item">
+                    <input type="text" value="السائق" class="f-name">
+                    <select class="f-type">
+                        <option value="text">نص عادي</option>
+                        <option value="currency">مبلغ مالي</option>
+                        <option value="date">تاريخ</option>
+                    </select>
+                </div>
+                <div class="field-row-item">
+                    <input type="text" value="رقم السيارة" class="f-name">
+                    <select class="f-type">
+                        <option value="text" selected>نص عادي</option>
+                        <option value="currency">مبلغ مالي</option>
+                        <option value="date">تاريخ</option>
+                    </select>
+                </div>
+                <div class="field-row-item">
+                    <input type="text" value="أجور العمل" class="f-name">
+                    <select class="f-type">
+                        <option value="text">نص عادي</option>
+                        <option value="currency" selected>مبلغ مالي</option>
+                        <option value="date">تاريخ</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button class="main-btn" style="background: #334155; margin-top: 10px; font-size: 12.5px; padding: 9px;" onclick="appendTabFieldInput('', 'text')" data-i18n="btn_add_field">+ إضافة حقل آخر</button>
+
+            <div class="modal-btns">
+                <button class="main-btn" style="background: linear-gradient(135deg, #10b981, #059669); margin-top:0;" onclick="saveNewTab()" data-i18n="btn_create_section">إنشاء القسم</button>
+                <button class="main-btn" style="background: linear-gradient(135deg, #ef4444, #dc2626); margin-top:0;" onclick="closeModal('tab-modal')" data-i18n="btn_cancel">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="fields-modal">
+        <div class="modal-card">
+            <h3 data-i18n="modal_edit_fields_title">إدارة حقول وعملة القسم الحالي</h3>
+            
+            <label data-i18n="lbl_currency">عملة القسم:</label>
+            <select id="edit-tab-currency">
+                <option value="$">دولار ($)</option>
+                <option value="ل.س">ليرة سورية (ل.س)</option>
+                <option value="₺">ليرة تركية (₺)</option>
+                <option value="€">يورو (€)</option>
+                <option value="دينار">دينار</option>
+                <option value="بدون عملة">بدون عملة</option>
+            </select>
+
+            <label style="margin-top: 15px;" data-i18n="lbl_fields">الحقول:</label>
+            <div id="edit-tab-fields-list"></div>
+            <button class="main-btn" style="background: #334155; margin-top: 10px; font-size: 12.5px; padding: 9px;" onclick="appendEditFieldInput('', 'text')" data-i18n="btn_add_field">+ إضافة حقل جديد</button>
+            
+            <div class="modal-btns">
+                <button class="main-btn" style="background: linear-gradient(135deg, #10b981, #059669); margin-top:0;" onclick="saveTabFieldsChanges()" data-i18n="btn_save_changes">حفظ التعديلات</button>
+                <button class="main-btn" style="background: linear-gradient(135deg, #ef4444, #dc2626); margin-top:0;" onclick="closeModal('fields-modal')" data-i18n="btn_cancel">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD0dlUeElMrPsmEM8nYRZ4E4ZQ-gIFhg4Q",
+            authDomain: "albayantransit.firebaseapp.com",
+            databaseURL: "https://albayantransit-default-rtdb.firebaseio.com",
+            projectId: "albayantransit",
+            storageBucket: "albayantransit.firebasestorage.app",
+            messagingSenderId: "930666618405",
+            appId: "1:930666618405:web:22812d613f9989f58929cc",
+            measurementId: "G-Y31C6RWGWS"
+        };
+
+        let dbInstance = null;
+        let authInstance = null;
+        try {
+            const app = initializeApp(firebaseConfig);
+            dbInstance = getDatabase(app);
+            authInstance = getAuth(app);
+        } catch(err) {}
+
+        window.fbDB = dbInstance;
+        window.fbAuth = authInstance;
+        window.fbRef = ref;
+        window.fbSet = set;
+        window.fbGet = get;
+        window.fbOnValue = onValue;
+        window.fbRemove = remove;
+        window.fbCreateUser = createUserWithEmailAndPassword;
+        window.fbSignIn = signInWithEmailAndPassword;
+        window.fbSignOut = signOut;
+
+        if(authInstance) {
+            onAuthStateChanged(authInstance, async (user) => {
+                if(user) {
+                    const email = user.email.toLowerCase();
+                    const key = email.replace(/[.#$[\]]/g, "_");
+                    const isAdmin = (email === 'lgsm0039@gmail.com');
+
+                    if(isAdmin) {
+                        window.activateDashboard(email);
+                    } else {
+                        try {
+                            const snap = await get(ref(dbInstance, 'users_auth/' + key));
+                            if(snap.exists()) {
+                                const dat = snap.val();
+                                if(dat.approved && !dat.banned) {
+                                    const expiryDate = dat.expiryDate;
+                                    if (!expiryDate || new Date() > new Date(expiryDate)) {
+                                        document.getElementById('expired-overlay').style.display = 'flex';
+                                    } else {
+                                        window.activateDashboard(email);
+                                    }
+                                } else {
+                                    window.showToast('حسابك قيد الانتظار أو بانتظار موافقة الإدارة اليدوية.', 'info');
+                                    await signOut(authInstance);
+                                }
+                            } else {
+                                await signOut(authInstance);
+                            }
+                        } catch(e) {
+                            window.activateDashboard(email);
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+
+    <script>
+        const CURRENT_APP_VERSION = "v12.0_pro_transit_edition";
+        if (localStorage.getItem("AlMustafa_App_Version") !== CURRENT_APP_VERSION) {
+            localStorage.setItem("AlMustafa_App_Version", CURRENT_APP_VERSION);
+        }
+
+        let currentLang = localStorage.getItem('almustafa_lang') || 'ar';
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if(!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success' ? '✅' : (type === 'error' ? '⚠️' : 'ℹ️');
+            toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+        window.showToast = showToast;
+
+        function closeModal(id) {
+            const m = document.getElementById(id);
+            if(m) m.style.display = 'none';
+        }
+        window.closeModal = closeModal;
+
+        const translations = {
+            ar: {
+                app_title: "برنامج المصطفى للترانزيت والمحاسبة",
+                login_title: "برنامج المصطفى",
+                login_desc: "برنامج المصطفى - لإدارة الترانزيت والمحاسبة والعمليات بكل احترافية وسهولة تامة.",
+                btn_login: "تسجيل الدخول",
+                btn_register: "طلب حساب جديد",
+                subtitle_transit: "ترانزيت ومحاسبة",
+                menu_sections: "الأقسام والتبويبات",
+                btn_new_tab: "تبويب جديد",
+                btn_excel: "📊 تصدير السجلات إلى Excel مصفى ومرتب",
+                btn_settings: "⚙️ الإعدادات والنسخ الاحتياطي",
+                btn_admin: "👥 إدارة المستخدمين",
+                btn_logout: "🚪 تسجيل خروج نهائي",
+                btn_manage_fields: "⚙️ تعديل الحقول والعملة",
+                btn_add_record: "+ إضافة سجل جديد",
+                modal_settings_title: "⚙️ إعدادات البرنامج والنسخ الاحتياطي",
+                modal_settings_desc: "تخصيص الواجهة والتحكم ببيانات النظام وحسابك الحالي والدعم الفني.",
+                lbl_email: "البريد الإلكتروني المسجل:",
+                lbl_system_operations: "إجراءات النظام:",
+                lbl_cloud_status: "حالة الاتصال والعمل الحالية:",
+                btn_close: "إغلاق",
+                btn_save: "حفظ البيانات",
+                btn_cancel: "إلغاء",
+                modal_new_tab_title: "إنشاء تبويب (قسم) جديد",
+                lbl_tab_name: "اسم القسم أو التبويب",
+                lbl_currency: "العملة الخاصة بهذا القسم:",
+                lbl_tab_fields: "الحقول الخاصة بهذا القسم:",
+                btn_add_field: "+ إضافة حقل جديد",
+                btn_create_section: "إنشاء القسم",
+                modal_edit_fields_title: "إدارة حقول وعملة القسم الحالي",
+                lbl_fields: "الحقول:",
+                btn_save_changes: "حفظ التعديلات"
+            },
+            en: {
+                app_title: "Al-Mustafa Transit & Accounting Software",
+                login_title: "Al-Mustafa Program",
+                login_desc: "Al-Mustafa Program - For managing transit, accounting and operations professionally.",
+                btn_login: "Sign In",
+                btn_register: "Request Account",
+                subtitle_transit: "Transit & Accounting",
+                menu_sections: "Sections & Tabs",
+                btn_new_tab: "New Tab",
+                btn_excel: "📊 Export Records to Excel",
+                btn_settings: "⚙️ Settings & Backup",
+                btn_admin: "👥 Users Admin",
+                btn_logout: "🚪 Logout",
+                btn_manage_fields: "⚙️ Edit Fields & Currency",
+                btn_add_record: "+ Add New Record",
+                modal_settings_title: "⚙️ App Settings & Backup",
+                modal_settings_desc: "Customize interface and control system data, current account and support.",
+                lbl_email: "Registered Email:",
+                lbl_system_operations: "System Operations:",
+                lbl_cloud_status: "Current Connection Status:",
+                btn_close: "Close",
+                btn_save: "Save Data",
+                btn_cancel: "Cancel",
+                modal_new_tab_title: "Create New Tab (Section)",
+                lbl_tab_name: "Section or Tab Name",
+                lbl_currency: "Section Currency:",
+                lbl_tab_fields: "Section Fields:",
+                btn_add_field: "+ Add Field",
+                btn_create_section: "Create Section",
+                modal_edit_fields_title: "Manage Current Section Fields & Currency",
+                lbl_fields: "Fields:",
+                btn_save_changes: "Save Changes"
+            }
+        };
+
+        function applyLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('almustafa_lang', lang);
+            const root = document.getElementById('html-root');
+            root.setAttribute('lang', lang);
+            root.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if(translations[lang][key]) {
+                    el.innerText = translations[lang][key];
+                }
+            });
+
+            const langBtn = document.getElementById('lang-btn-text');
+            if(langBtn) {
+                langBtn.innerText = (lang === 'ar') ? '🌐 English' : '🌐 العربية';
+            }
+        }
+
+        function toggleLanguage() {
+            applyLanguage(currentLang === 'ar' ? 'en' : 'ar');
+        }
+
+        let currentUserEmail = '';
+        let currentUserKey = '';
+        const ADMIN_EMAIL = 'lgsm0039@gmail.com';
+
+        let systemData = {
+            tabs: {
+                main_section: { 
+                    name: 'إدارة سيارات الترانزيت', 
+                    currency: '$',
+                    fields: [
+                        {name: 'السائق', type: 'text'},
+                        {name: 'رقم السيارة', type: 'text'},
+                        {name: 'أجور العمل', type: 'currency'},
+                        {name: 'ملاحظات', type: 'text'},
+                        {name: 'التاريخ', type: 'date'}
+                    ], 
+                    data: [] 
+                }
+            },
+            activeTabKey: 'main_section'
+        };
+
+        let editingIndex = -1;
+        let isSyncing = false;
+        let activeRecordPdfBase64 = ''; 
+
+        function sendToWhatsApp() { window.open('https://wa.me/963980231089', '_blank'); }
+        function validateEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar-panel');
+            const mainContent = document.getElementById('main-content');
+            const toggleBtn = document.getElementById('sidebar-toggle-icon');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+            toggleBtn.innerText = sidebar.classList.contains('collapsed') ? '▶' : '◀';
+        }
+
+        function openSettingsModal() {
+            document.getElementById('settings-user-email').value = currentUserEmail || 'حساب محلي (Offline)';
+            updateNetworkStatusUI();
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+
+        function updateNetworkStatusUI() {
+            const badge = document.getElementById('cloud-status-badge');
+            if(!badge) return;
+            if(navigator.onLine) {
+                badge.style.background = 'rgba(16, 185, 129, 0.15)';
+                badge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                badge.style.color = '#34d399';
+                badge.innerText = '🟢 الحفظ محلي في ذاكرة جهازك + مزامنة مع السحابة';
+            } else {
+                badge.style.background = 'rgba(245, 158, 11, 0.15)';
+                badge.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+                badge.style.color = '#fbbf24';
+                badge.innerText = '🟠 العمل محلياً فقط (أوفلاين - البيانات محفوظة في ذاكرة الجهاز)';
+            }
+        }
+
+        window.addEventListener('online', updateNetworkStatusUI);
+        window.addEventListener('offline', updateNetworkStatusUI);
+
+        window.handleRegister = async function() {
+            const email = document.getElementById('auth-email').value.trim().toLowerCase();
+            const pass = document.getElementById('auth-password').value.trim();
+            
+            if(!email || !pass) { showToast('الرجاء إدخال البريد الإلكتروني وكلمة المرور', 'error'); return; }
+            if(!validateEmail(email)) { showToast('يرجى إدخال بريد إلكتروني صحيح', 'error'); return; }
+
+            const key = email.replace(/[.#$[\]]/g, "_");
+            const isAdmin = (email === ADMIN_EMAIL.toLowerCase());
+
+            try {
+                if(window.fbAuth && window.fbCreateUser) {
+                    await window.fbCreateUser(window.fbAuth, email, pass);
+                }
+                if(window.fbDB && window.fbSet && window.fbRef) {
+                    await window.fbSet(window.fbRef(window.fbDB, 'users_auth/' + key), {
+                        email: email,
+                        approved: isAdmin,
+                        banned: false,
+                        expiryDate: isAdmin ? '2030-01-01' : ''
+                    });
+                }
+                if(isAdmin) {
+                    window.activateDashboard(email);
+                } else {
+                    showToast('تم إرسال طلب إنشاء الحساب بنجاح! بانتظار موافقة الإدارة.', 'success');
+                    if(window.fbAuth && window.fbSignOut) window.fbSignOut(window.fbAuth);
+                }
+            } catch(error) {
+                if(error.code === 'auth/email-already-in-use') {
+                    showToast('هذا البريد مسجل مسبقاً، يرجى تسجيل الدخول مباشرة.', 'info');
+                } else {
+                    showToast('خطأ في التسجيل: ' + error.message, 'error');
+                }
+            }
+        };
+
+        window.handleLogin = async function() {
+            const email = document.getElementById('auth-email').value.trim().toLowerCase();
+            const pass = document.getElementById('auth-password').value.trim();
+            
+            if(!email || !pass) { showToast('الرجاء إدخال البريد الإلكتروني وكلمة المرور', 'error'); return; }
+            if(!validateEmail(email)) { showToast('يرجى إدخال بريد إلكتروني صحيح', 'error'); return; }
+
+            const key = email.replace(/[.#$[\]]/g, "_");
+            const isAdmin = (email === ADMIN_EMAIL.toLowerCase());
+
+            if(!navigator.onLine) {
+                window.activateDashboard(email);
+                return;
+            }
+
+            try {
+                if(window.fbDB && window.fbGet && window.fbRef) {
+                    const snap = await window.fbGet(window.fbRef(window.fbDB, 'users_auth/' + key));
+                    if(snap.exists()) {
+                        const dat = snap.val();
+                        if(dat.banned) { showToast('عذراً، هذا الحساب محظور من قبل الإدارة.', 'error'); return; }
+                        if(!isAdmin) {
+                            if(!dat.approved) { showToast('حسابك بانتظار موافقة الإدارة وتفعيل الاشتراك.', 'info'); return; }
+                            if(!dat.expiryDate || new Date() > new Date(dat.expiryDate)) {
+                                document.getElementById('expired-overlay').style.display = 'flex';
+                                return;
+                            }
+                        }
+                    } else {
+                        if(window.fbSet && window.fbRef) {
+                            await window.fbSet(window.fbRef(window.fbDB, 'users_auth/' + key), {
+                                email: email,
+                                approved: isAdmin,
+                                banned: false,
+                                expiryDate: ''
+                            });
+                        }
+                        if(!isAdmin) {
+                            showToast('تم تسجيل طلبك الجديد بنجاح. بانتظار موافقة الإدارة وتحديد مدة الاشتراك.', 'info');
+                            return;
+                        }
+                    }
+                }
+
+                if(window.fbAuth && window.fbSignIn) {
+                    await window.fbSignIn(window.fbAuth, email, pass);
+                    window.activateDashboard(email);
+                } else {
+                    window.activateDashboard(email);
+                }
+            } catch(error) {
+                window.activateDashboard(email);
+            }
+        };
+
+        window.activateDashboard = function(email) {
+            currentUserEmail = email;
+            currentUserKey = email ? email.replace(/[.#$[\]]/g, "_") : 'offline_local_user';
+
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('expired-overlay').style.display = 'none';
+            document.getElementById('app-dashboard').style.display = 'block';
+
+            if(currentUserEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                document.getElementById('btn-admin-panel').style.display = 'inline-flex';
+            } else {
+                document.getElementById('btn-admin-panel').style.display = 'none';
+            }
+
+            initSyncEngine();
+            showToast('أهلاً بك! تم تحميل البيانات المحفوظة محلياً بنجاح.', 'success');
+        }
+
+        window.handleLogout = async function() {
+            try {
+                if(window.fbAuth && window.fbSignOut) await window.fbSignOut(window.fbAuth);
+            } catch(e) {}
+            location.reload();
+        }
+
+        /* ميزة الحفظ التلقائي في ذاكرة الجهاز (LocalStorage) */
+        function syncToCloud() {
+            if(isSyncing) return;
+
+            const storageKey = 'almustafa_local_' + (currentUserKey || 'offline_user');
+            try {
+                localStorage.setItem(storageKey, JSON.stringify(systemData));
+            } catch(e) {
+                console.warn('LocalStorage limit or error', e);
+            }
+
+            if(navigator.onLine && window.fbDB && window.fbSet && window.fbRef && currentUserKey) {
+                try {
+                    window.fbSet(window.fbRef(window.fbDB, 'user_databases/' + currentUserKey), systemData)
+                          .catch(() => {});
+                } catch(e) {}
+            }
+        }
+
+        window.forceSaveToDevice = function() {
+            const storageKey = 'almustafa_local_' + (currentUserKey || 'offline_user');
+            localStorage.setItem(storageKey, JSON.stringify(systemData));
+            showToast('💾 تم حفظ كافة الأعمال والبيانات بنجاح في ذاكرة هذا الجهاز!', 'success');
+        };
+
+        function validateAndFixSystemData(val) {
+            try {
+                if (!val || typeof val !== 'object') return false;
+                if (!val.tabs || typeof val.tabs !== 'object') return false;
+                let keys = Object.keys(val.tabs);
+                if (keys.length === 0) return false;
+                keys.forEach(k => {
+                    if (!val.tabs[k]) return;
+                    if (!val.tabs[k].name) val.tabs[k].name = 'قسم جديد';
+                    if (!val.tabs[k].currency) val.tabs[k].currency = '$';
+                    if (!Array.isArray(val.tabs[k].fields)) {
+                        val.tabs[k].fields = [{name: 'السائق', type: 'text'}, {name: 'أجور العمل', type: 'currency'}, {name: 'التاريخ', type: 'date'}];
+                    }
+                    if (!Array.isArray(val.tabs[k].data)) val.tabs[k].data = [];
+                    val.tabs[k].data = val.tabs[k].data.map(item => {
+                        if (Array.isArray(item)) {
+                            return { values: item, pdf: '' };
+                        }
+                        return item;
+                    });
+                });
+                if (!val.activeTabKey || !val.tabs[val.activeTabKey]) {
+                    val.activeTabKey = keys[0];
+                }
+                return true;
+            } catch(err) { return false; }
+        }
+
+        function initSyncEngine() {
+            const storageKey = 'almustafa_local_' + (currentUserKey || 'offline_user');
+            let local = localStorage.getItem(storageKey);
+            if(local) {
+                try { 
+                    let parsed = JSON.parse(local);
+                    if(validateAndFixSystemData(parsed)) systemData = parsed;
+                } catch(err) {}
+            }
+            renderTabsList();
+            switchTab(systemData.activeTabKey, true);
+
+            if(navigator.onLine && window.fbDB && window.fbOnValue && window.fbRef && currentUserKey) {
+                try {
+                    window.fbOnValue(window.fbRef(window.fbDB, 'user_databases/' + currentUserKey), (snapshot) => {
+                        const val = snapshot.val();
+                        if(val && validateAndFixSystemData(val)) {
+                            isSyncing = true;
+                            systemData = val;
+                            localStorage.setItem(storageKey, JSON.stringify(systemData));
+                            renderTabsList();
+                            switchTab(systemData.activeTabKey, true);
+                            isSyncing = false;
+                        }
+                    });
+                } catch(e) {}
+            }
+        }
+
+        function renderTabsList() {
+            const container = document.getElementById('tabs-container');
+            container.innerHTML = '';
+            const keys = Object.keys(systemData.tabs);
+            
+            keys.forEach(k => {
+                const tab = systemData.tabs[k];
+                if(!tab) return;
+                const active = (systemData.activeTabKey === k) ? 'active' : '';
+                
+                const wrap = document.createElement('div');
+                wrap.className = 'tab-item-wrapper ' + active;
+                
+                const btn = document.createElement('button');
+                btn.className = 'nav-btn';
+                btn.innerHTML = `<span>${tab.name}</span>`;
+                btn.onclick = () => {
+                    systemData.activeTabKey = k;
+                    syncToCloud();
+                    switchTab(k);
+                };
+                wrap.appendChild(btn);
+                
+                if(keys.length > 1) {
+                    const del = document.createElement('button');
+                    del.className = 'tab-del-btn';
+                    del.innerHTML = '✕';
+                    del.onclick = (e) => {
+                        e.stopPropagation();
+                        deleteTab(k);
+                    };
+                    wrap.appendChild(del);
+                }
+                container.appendChild(wrap);
+            });
+        }
+
+        function deleteTab(k) {
+            if(confirm('هل أنت متأكد من حذف هذا القسم وكل بياناته؟')) {
+                delete systemData.tabs[k];
+                const remaining = Object.keys(systemData.tabs);
+                if(remaining.length > 0) systemData.activeTabKey = remaining[0];
+                else {
+                    systemData.tabs['default_sec'] = { 
+                        name: 'الترانزيت', 
+                        currency: '$',
+                        fields: [{name: 'السائق', type: 'text'}, {name: 'أجور العمل', type: 'currency'}, {name: 'التاريخ', type: 'date'}], 
+                        data: [] 
+                    };
+                    systemData.activeTabKey = 'default_sec';
+                }
+                syncToCloud();
+                renderTabsList();
+                switchTab(systemData.activeTabKey);
+                showToast('تم حذف القسم بنجاح', 'info');
+            }
+        }
+
+        function resetDateFilters() {
+            document.getElementById('filter-date-from').value = '';
+            document.getElementById('filter-date-to').value = '';
+            renderTable();
+        }
+
+        function switchTab(k, skipSave = false) {
+            if(!systemData.tabs[k]) {
+                const keys = Object.keys(systemData.tabs);
+                if(keys.length > 0) k = keys[0];
+                else return;
+            }
+            systemData.activeTabKey = k;
+            if(!skipSave) syncToCloud();
+            renderTabsList();
+            
+            document.getElementById('table-search-input').value = '';
+            resetDateFilters();
+
+            const current = systemData.tabs[k];
+            document.getElementById('table-title').innerText = (currentLang === 'ar' ? 'إدارة ' : 'Manage ') + current.name + ` (${current.currency || '$'})`;
+            
+            const headRow = document.getElementById('table-head-row');
+            headRow.innerHTML = `<th style="width: 50px;">#</th>`;
+            current.fields.forEach(f => headRow.innerHTML += `<th>${f.name}</th>`);
+            headRow.innerHTML += `<th style="width: 120px;">مجموع الشحنة</th>`; // عمود مجموع كل شحنة على حدة
+            headRow.innerHTML += `<th style="width: 130px;">ملف PDF</th>`;
+            headRow.innerHTML += `<th style="width: 180px;">${currentLang === 'ar' ? 'الإجراءات' : 'Actions'}</th>`;
+
+            renderTable();
+        }
+
+        function openAddTabModal() {
+            document.getElementById('new-tab-name-input').value = '';
+            document.getElementById('new-tab-currency').value = '$';
+            document.getElementById('tab-modal').style.display = 'flex';
+        }
+
+        function appendTabFieldInput(nameVal = '', typeVal = 'text') {
+            const container = document.getElementById('new-tab-fields-list');
+            const div = document.createElement('div');
+            div.className = 'field-row-item';
+            div.innerHTML = `
+                <input type="text" placeholder="اسم الحقل" value="${nameVal}" class="f-name">
+                <select class="f-type">
+                    <option value="text" ${typeVal==='text'?'selected':''}>نص عادي</option>
+                    <option value="currency" ${typeVal==='currency'?'selected':''}>مبلغ مالي</option>
+                    <option value="date" ${typeVal==='date'?'selected':''}>تاريخ</option>
+                </select>
+                <button class="remove-field-btn" onclick="this.parentElement.remove()">✕</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function saveNewTab() {
+            const name = document.getElementById('new-tab-name-input').value.trim();
+            if(!name) { showToast('الرجاء إدخال اسم القسم', 'error'); return; }
+            const currency = document.getElementById('new-tab-currency').value;
+
+            const rows = document.querySelectorAll('#new-tab-fields-list .field-row-item');
+            let fields = [];
+            rows.forEach(r => {
+                const fName = r.querySelector('.f-name').value.trim();
+                const fType = r.querySelector('.f-type').value;
+                if(fName) fields.push({name: fName, type: fType});
+            });
+            if(fields.length === 0) fields = [{name: 'السائق', type: 'text'}, {name: 'أجور العمل', type: 'currency'}, {name: 'التاريخ', type: 'date'}];
+
+            const newKey = 'tab_' + Date.now();
+            systemData.tabs[newKey] = { name: name, currency: currency, fields: fields, data: [] };
+            systemData.activeTabKey = newKey;
+            closeModal('tab-modal');
+            syncToCloud();
+            renderTabsList();
+            switchTab(newKey);
+            showToast('تم إنشاء القسم بنجاح وحفظه!', 'success');
+        }
+
+        function openManageFieldsModal() {
+            const current = systemData.tabs[systemData.activeTabKey];
+            document.getElementById('edit-tab-currency').value = current.currency || '$';
+            const container = document.getElementById('edit-tab-fields-list');
+            container.innerHTML = '';
+            current.fields.forEach(f => {
+                const div = document.createElement('div');
+                div.className = 'field-row-item';
+                div.innerHTML = `
+                    <input type="text" value="${f.name}" class="f-name">
+                    <select class="f-type">
+                        <option value="text" ${f.type==='text'?'selected':''}>نص عادي</option>
+                        <option value="currency" ${f.type==='currency'?'selected':''}>مبلغ مالي</option>
+                        <option value="date" ${f.type==='date'?'selected':''}>تاريخ</option>
+                    </select>
+                    <button class="remove-field-btn" onclick="this.parentElement.remove()">✕</button>
+                `;
+                container.appendChild(div);
+            });
+            document.getElementById('fields-modal').style.display = 'flex';
+        }
+
+        function appendEditFieldInput(nameVal = '', typeVal = 'text') {
+            const container = document.getElementById('edit-tab-fields-list');
+            const div = document.createElement('div');
+            div.className = 'field-row-item';
+            div.innerHTML = `
+                <input type="text" value="${nameVal}" placeholder="اسم الحقل" class="f-name">
+                <select class="f-type">
+                    <option value="text" ${typeVal==='text'?'selected':''}>نص عادي</option>
+                    <option value="currency" ${typeVal==='currency'?'selected':''}>مبلغ مالي</option>
+                    <option value="date" ${typeVal==='date'?'selected':''}>تاريخ</option>
+                </select>
+                <button class="remove-field-btn" onclick="this.parentElement.remove()">✕</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function saveTabFieldsChanges() {
+            const currency = document.getElementById('edit-tab-currency').value;
+            const rows = document.querySelectorAll('#edit-tab-fields-list .field-row-item');
+            let newFields = [];
+            rows.forEach(r => {
+                const fName = r.querySelector('.f-name').value.trim();
+                const fType = r.querySelector('.f-type').value;
+                if(fName) newFields.push({name: fName, type: fType});
+            });
+            if(newFields.length === 0) { showToast('يجب أن يحتوي القسم على حقل واحد على الأقل', 'error'); return; }
+
+            const current = systemData.tabs[systemData.activeTabKey];
+            current.fields = newFields;
+            current.currency = currency;
+            closeModal('fields-modal');
+            syncToCloud();
+            switchTab(systemData.activeTabKey);
+            showToast('تم تحديث الحقول والعملة بنجاح!', 'success');
+        }
+
+        function openModalForAdd() {
+            editingIndex = -1;
+            activeRecordPdfBase64 = '';
+            document.getElementById('modal-title').innerText = currentLang === 'ar' ? 'إضافة سجل جديد' : 'Add New Record';
+            document.getElementById('modal-pdf-file-input').value = '';
+            document.getElementById('current-pdf-status').innerText = 'لم يتم اختيار ملف PDF';
+            buildRecordFormInputs([]);
+            document.getElementById('record-modal').style.display = 'flex';
+        }
+
+        function buildRecordFormInputs(existingValues) {
+            const current = systemData.tabs[systemData.activeTabKey];
+            const container = document.getElementById('modal-fields-container');
+            container.innerHTML = '';
+
+            current.fields.forEach((f, idx) => {
+                const val = (existingValues && existingValues[idx] !== undefined) ? existingValues[idx] : '';
+                const lbl = document.createElement('label');
+                lbl.innerText = f.name;
+                const inp = document.createElement('input');
+                if(f.type === 'date') inp.type = 'date';
+                else if(f.type === 'currency') {
+                    inp.type = 'number';
+                    inp.step = 'any';
+                } else {
+                    inp.type = 'text';
+                }
+                inp.value = val;
+                container.appendChild(lbl);
+                container.appendChild(inp);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const pdfInput = document.getElementById('modal-pdf-file-input');
+            if(pdfInput) {
+                pdfInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if(file) {
+                        if(file.type !== 'application/pdf') {
+                            showToast('الرجاء اختيار ملف PDF صالح فقط', 'error');
+                            this.value = '';
+                            return;
+                        }
+                        if(file.size > 2 * 1024 * 1024) {
+                            showToast('تنبيه: حجم الملف كبير جداً (يفضل أقل من 2 ميغابايت للحفاظ على سرعة الأداء)', 'info');
+                        }
+                        const reader = new FileReader();
+                        reader.onload = function(uploadEvent) {
+                            activeRecordPdfBase64 = uploadEvent.target.result;
+                            document.getElementById('current-pdf-status').innerText = '🟢 تم إرفاق الملف بنجاح: ' + file.name;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        });
+
+        function saveRecordData() {
+            const current = systemData.tabs[systemData.activeTabKey];
+            const inputs = document.querySelectorAll('#modal-fields-container input');
+            let rowValues = [];
+            inputs.forEach(inp => rowValues.push(inp.value.trim()));
+
+            if(editingIndex === -1) {
+                current.data.push({
+                    values: rowValues,
+                    pdf: activeRecordPdfBase64
+                });
+                showToast('تم حفظ السجل جديد بنجاح بذاكرة الجهاز', 'success');
+            } else {
+                let existingPdf = current.data[editingIndex].pdf || '';
+                current.data[editingIndex] = {
+                    values: rowValues,
+                    pdf: activeRecordPdfBase64 ? activeRecordPdfBase64 : existingPdf
+                };
+                showToast('تم تعديل السجل بنجاح', 'success');
+            }
+
+            closeModal('record-modal');
+            syncToCloud();
+            renderTable();
+        }
+
+        function formatNumberWithCommas(num) {
+            if (isNaN(num)) return num;
+            return Number(num).toLocaleString('en-US');
+        }
+
+        function openPdfViewer(base64Data) {
+            if(!base64Data) {
+                showToast(currentLang === 'ar' ? 'لا يوجد ملف PDF مرفق بهذا السجل.' : 'No PDF attached.', 'info');
+                return;
+            }
+            try {
+                const base64Clean = base64Data.split(',')[1] || base64Data;
+                const byteCharacters = atob(base64Clean);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+                const blobUrl = URL.createObjectURL(blob);
+                
+                const win = window.open(blobUrl, '_blank');
+                if (!win) {
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.target = '_blank';
+                    a.click();
+                }
+            } catch(e) {
+                showToast('حدث خطأ أثناء عرض ملف PDF: ' + e.message, 'error');
+            }
+        }
+
+        window.removeRecordPdf = function(index) {
+            if(confirm('هل أنت متأكد من حذف ملف الـ PDF المرفق من هذا السجل؟')) {
+                const current = systemData.tabs[systemData.activeTabKey];
+                if(current.data[index]) {
+                    current.data[index].pdf = '';
+                    syncToCloud();
+                    renderTable();
+                    showToast('تم حذف ملف PDF المرفق', 'info');
+                }
+            }
+        }
+
+        /* ميزة الطباعة المطورة والحديثة */
+        window.printRecordReceipt = function(rIndex) {
+            const current = systemData.tabs[systemData.activeTabKey];
+            const itemObj = current.data[rIndex];
+            if (!itemObj) return;
+
+            const row = itemObj.values || itemObj;
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('ar-SY') + ' - ' + now.toLocaleTimeString('ar-SY', {hour: '2-digit', minute:'2-digit'});
+            const receiptNum = 'TR-' + String(rIndex + 1).padStart(5, '0');
+
+            let rowsHtml = '';
+            current.fields.forEach((f, idx) => {
+                let val = row[idx] || '-';
+                if(f.type === 'currency' && val !== '-' && !isNaN(val)) {
+                    val = `<span style="color:#0284c7; font-weight:800; font-size:15px;">${formatNumberWithCommas(val)} ${current.currency || '$'}</span>`;
+                }
+                rowsHtml += `
+                    <tr>
+                        <th>${f.name}</th>
+                        <td>${val}</td>
+                    </tr>
+                `;
+            });
+
+            const receiptHtml = `
+                <div class="receipt-card-print">
+                    <div class="receipt-header-print">
+                        <div class="receipt-brand-box">
+                            <div class="receipt-logo-icon">KM</div>
+                            <div class="receipt-title-box">
+                                <h2>برنامج المصطفى للترانزيت والمحاسبة</h2>
+                                <p>سند شحنة وتفاصيل عملية - القسم: ${current.name}</p>
+                            </div>
+                        </div>
+                        <div class="receipt-meta-badge">
+                            <div>رقم السند: <strong>${receiptNum}</strong></div>
+                            <div>تاريخ الطباعة: <strong>${dateStr}</strong></div>
+                        </div>
+                    </div>
+
+                    <table class="receipt-table-styled">
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+
+                    <div class="receipt-signatures-footer">
+                        <div class="signature-box">
+                            <div class="signature-title">توقيع المستلم / السائق</div>
+                            <div class="signature-line"></div>
+                        </div>
+                        <div class="signature-box">
+                            <div class="signature-title">توقيع المحاسب / الإدارة</div>
+                            <div class="signature-line"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('receipt-details-body').innerHTML = receiptHtml;
+            const printable = document.getElementById('printable-receipt');
+            printable.style.display = 'block';
+            window.print();
+            printable.style.display = 'none';
+        }
+
+        function renderTable() {
+            const current = systemData.tabs[systemData.activeTabKey];
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            const searchQuery = document.getElementById('table-search-input').value.trim().toLowerCase();
+            const dateFrom = document.getElementById('filter-date-from').value;
+            const dateTo = document.getElementById('filter-date-to').value;
+
+            let filteredRows = [];
+            let pdfCounter = 0;
+            let grandTotalSum = 0;
+            let validNumCount = 0;
+            let currencySymbol = current.currency || '$';
+
+            current.data.forEach((itemObj, originalIndex) => {
+                let row = itemObj.values || itemObj;
+                let matchesText = false;
+                if (!searchQuery) {
+                    matchesText = true;
+                } else {
+                    for (let i = 0; i < row.length; i++) {
+                        if (row[i] && row[i].toString().toLowerCase().includes(searchQuery)) {
+                            matchesText = true;
+                            break;
+                        }
+                    }
+                }
+
+                let matchesDate = true;
+                if(dateFrom || dateTo) {
+                    let dateIdx = current.fields.findIndex(f => f.type === 'date');
+                    if(dateIdx !== -1 && row[dateIdx]) {
+                        let rowDate = new Date(row[dateIdx]);
+                        if(dateFrom && rowDate < new Date(dateFrom)) matchesDate = false;
+                        if(dateTo && rowDate > new Date(dateTo)) matchesDate = false;
+                    }
+                }
+
+                if (matchesText && matchesDate) {
+                    filteredRows.push({ item: itemObj, index: originalIndex });
+                    if(itemObj.pdf) pdfCounter++;
+                }
+            });
+
+            const countText = currentLang === 'ar' ? 'عدد السجلات: ' : 'Records Count: ';
+            document.getElementById('records-count').innerText = countText + filteredRows.length + (filteredRows.length !== current.data.length ? ` (من أصل ${current.data.length})` : '');
+
+            if(filteredRows.length === 0) {
+                const colSpan = current.fields.length + 4;
+                const emptyMsg = currentLang === 'ar' ? 'لا توجد سجلات مطابقة للبحث أو التصفية.' : 'No matching records found.';
+                tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align: center; color: var(--text-muted); padding: 35px;">${emptyMsg}</td></tr>`;
+            } else {
+                filteredRows.forEach((wrapped, displayIndex) => {
+                    const itemObj = wrapped.item;
+                    const row = itemObj.values || itemObj;
+                    const pdfData = itemObj.pdf || '';
+                    const rIndex = wrapped.index;
+
+                    const tr = document.createElement('tr');
+                    let html = `<td>${displayIndex + 1}</td>`;
+                    
+                    let rowSum = 0;
+                    current.fields.forEach((f, fIndex) => {
+                        let cellVal = (row[fIndex] !== undefined) ? row[fIndex] : '';
+                        if (f.type === 'currency' && cellVal !== '' && !isNaN(cellVal)) {
+                            let num = parseFloat(cellVal);
+                            rowSum += num;
+                            grandTotalSum += num;
+                            validNumCount++;
+                            cellVal = formatNumberWithCommas(cellVal);
+                        }
+                        html += `<td>${cellVal}</td>`;
+                    });
+
+                    // عمود مجموع الشحنة الحالية على حدة
+                    let formattedRowSum = formatNumberWithCommas(rowSum);
+                    let rowSumDisplay = (currencySymbol === 'بدون عملة') ? formattedRowSum : `${formattedRowSum} ${currencySymbol}`;
+                    html += `<td style="font-weight: 800; color: #38bdf8; background: rgba(56, 189, 248, 0.08);">${rowSumDisplay}</td>`;
+
+                    if(pdfData) {
+                        html += `<td>
+                            <button onclick="openPdfViewer(systemData.tabs['${systemData.activeTabKey}'].data[${rIndex}].pdf)" class="tbl-btn-pdf" style="margin-bottom:3px;">📄 عرض</button>
+                            <button onclick="removeRecordPdf(${rIndex})" style="background:#ef4444; color:#fff; border:none; padding:3px 6px; border-radius:5px; cursor:pointer; font-size:9.5px;">حذف</button>
+                        </td>`;
+                    } else {
+                        html += `<td style="color: var(--text-muted); font-size: 11.5px;">لا يوجد ملف</td>`;
+                    }
+
+                    const editTxt = currentLang === 'ar' ? 'تعديل' : 'Edit';
+                    const delTxt = currentLang === 'ar' ? 'حذف' : 'Delete';
+
+                    html += `
+                        <td>
+                            <button class="tbl-btn-print" onclick="printRecordReceipt(${rIndex})" title="طباعة سند">🖨️ طباعة</button>
+                            <button class="tbl-btn-edit" onclick="editRecord(${rIndex})">${editTxt}</button>
+                            <button class="tbl-btn-del" onclick="deleteRecord(${rIndex})">${delTxt}</button>
+                        </td>
+                    `;
+                    tr.innerHTML = html;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // تحديث بطاقات الإحصاء في أعلى الصفحة
+            document.getElementById('kpi-total-records').innerText = filteredRows.length;
+            document.getElementById('kpi-grand-total').innerText = formatNumberWithCommas(grandTotalSum) + ' ' + (currencySymbol === 'بدون عملة' ? '' : currencySymbol);
+            document.getElementById('kpi-avg-amount').innerText = validNumCount > 0 ? formatNumberWithCommas((grandTotalSum / validNumCount).toFixed(1)) + ' ' + (currencySymbol === 'بدون عملة' ? '' : currencySymbol) : '0';
+            document.getElementById('kpi-pdf-count').innerText = pdfCounter;
+        }
+
+        function editRecord(index) {
+            editingIndex = index;
+            activeRecordPdfBase64 = '';
+            const current = systemData.tabs[systemData.activeTabKey];
+            const itemObj = current.data[index];
+            const rowValues = itemObj.values || itemObj;
+
+            document.getElementById('modal-title').innerText = currentLang === 'ar' ? 'تعديل السجل' : 'Edit Record';
+            buildRecordFormInputs(rowValues);
+            
+            document.getElementById('modal-pdf-file-input').value = '';
+            if(itemObj.pdf) {
+                document.getElementById('current-pdf-status').innerText = '🟢 يوجد ملف PDF مرفق مسبقاً (سيتم الاحتفاظ به إن لم تقم برفع ملف جديد)';
+            } else {
+                document.getElementById('current-pdf-status').innerText = 'لم يتم إرفاق ملف PDF لهذا السجل';
+            }
+
+            document.getElementById('record-modal').style.display = 'flex';
+        }
+
+        function deleteRecord(index) {
+            if(confirm(currentLang === 'ar' ? 'هل أنت متأكد من حذف هذا السجل؟' : 'Are you sure you want to delete this record?')) {
+                const current = systemData.tabs[systemData.activeTabKey];
+                current.data.splice(index, 1);
+                syncToCloud();
+                renderTable();
+                showToast('تم حذف السجل بنجاح', 'info');
+            }
+        }
+
+        async function openAdminModal() {
+            document.getElementById('admin-modal').style.display = 'flex';
+            const tbody = document.getElementById('admin-users-list');
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">جاري جلب قائمة المستخدمين...</td></tr>`;
+
+            try {
+                if(window.fbDB && window.fbGet && window.fbRef) {
+                    const snap = await window.fbGet(window.fbRef(window.fbDB, 'users_auth'));
+                    if(snap.exists()) {
+                        const usersObj = snap.val();
+                        tbody.innerHTML = '';
+                        Object.keys(usersObj).forEach(k => {
+                            const usr = usersObj[k];
+                            if(usr.email && usr.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) return;
+
+                            let statusStr = '';
+                            let isExpired = false;
+                            if(usr.expiryDate) isExpired = new Date() > new Date(usr.expiryDate);
+
+                            if(usr.banned) statusStr = '<span style="color: #ef4444; font-weight: bold;">محظور</span>';
+                            else if(!usr.approved) statusStr = '<span style="color: #f59e0b; font-weight: bold;">بانتظار الموافقة</span>';
+                            else if(isExpired) statusStr = '<span style="color: #f97316; font-weight: bold;">منتهي الاشتراك</span>';
+                            else statusStr = '<span style="color: #10b981; font-weight: bold;">نشط</span>';
+
+                            let expiryStr = usr.expiryDate ? new Date(usr.expiryDate).toLocaleDateString('ar-EG') : 'غير محدد';
+                            let defaultDateVal = usr.expiryDate ? usr.expiryDate.split('T')[0] : new Date().toISOString().split('T')[0];
+
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${usr.email || k}</td>
+                                <td>${statusStr}</td>
+                                <td style="font-weight: 700; color: var(--accent-silver);">${expiryStr}</td>
+                                <td><input type="date" id="date_input_${k}" value="${defaultDateVal}" style="padding: 6px; margin: 0; font-size: 12px;"></td>
+                                <td>
+                                    <button style="background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; padding:6px 10px; border-radius:8px; cursor:pointer; font-weight:bold; margin-bottom: 2px; font-size: 11.5px;" onclick="saveManualExpiry('${k}')">موافقة وتجديد</button>
+                                    <button style="background:linear-gradient(135deg, #ef4444, #dc2626); color:#fff; border:none; padding:6px 10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size: 11.5px;" onclick="toggleBanUser('${k}', ${!usr.banned})">${usr.banned?'إلغاء الحظر':'حظر'}</button>
+                                </td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    } else {
+                        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">لا توجد حسابات مسجلة حالياً.</td></tr>`;
+                    }
+                }
+            } catch(e) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444;">تعذر الاتصال بقاعدة البيانات.</td></tr>`;
+            }
+        }
+
+        window.saveManualExpiry = async function(key) {
+            const dateInp = document.getElementById(`date_input_${key}`);
+            if(!dateInp || !dateInp.value) { showToast('يرجى تحديد تاريخ انتهاء صالح', 'error'); return; }
+            const newExpiry = dateInp.value;
+
+            try {
+                if(window.fbDB && window.fbSet && window.fbRef) {
+                    await window.fbSet(window.fbRef(window.fbDB, 'users_auth/' + key + '/approved'), true);
+                    await window.fbSet(window.fbRef(window.fbDB, 'users_auth/' + key + '/banned'), false);
+                    await window.fbSet(window.fbRef(window.fbDB, 'users_auth/' + key + '/expiryDate'), newExpiry);
+                    showToast('تم اعتماد وتجديد صلاحية المستخدم بنجاح!', 'success');
+                    openAdminModal();
+                }
+            } catch(e) {
+                showToast('خطأ أثناء التحديث: ' + e.message, 'error');
+            }
+        };
+
+        window.toggleBanUser = async function(key, banState) {
+            try {
+                if(window.fbDB && window.fbSet && window.fbRef) {
+                    await window.fbSet(window.fbRef(window.fbDB, 'users_auth/' + key + '/banned'), banState);
+                    showToast(banState ? 'تم حظر المستخدم بنجاح' : 'تم إلغاء حظر المستخدم', 'info');
+                    openAdminModal();
+                }
+            } catch(e) {
+                showToast('خطأ: ' + e.message, 'error');
+            }
+        };
+
+        window.exportJsonBackup = function() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(systemData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `AlMustafa_Transit_Backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('تم تنزيل النسخة الاحتياطية JSON بنجاح', 'success');
+        };
+
+        window.triggerJsonImport = function() {
+            document.getElementById('json-file-input').click();
+        };
+
+        window.importJsonBackup = function(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if(validateAndFixSystemData(parsed)) {
+                        systemData = parsed;
+                        syncToCloud();
+                        renderTabsList();
+                        switchTab(systemData.activeTabKey);
+                        showToast('تم استعادة البيانات والملفات بنجاح!', 'success');
+                    } else {
+                        showToast('ملف النسخة الاحتياطية التالف أو غير متوافق', 'error');
+                    }
+                } catch(err) {
+                    showToast('خطأ في قراءة ملف JSON', 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        };
+
+        window.exportExcel = function() {
+            const current = systemData.tabs[systemData.activeTabKey];
+            if(!current.data || current.data.length === 0) {
+                showToast('لا توجد سجلات في هذا القسم لتصديرها', 'info');
+                return;
+            }
+
+            let exportRows = [];
+            current.data.forEach((itemObj, idx) => {
+                let row = itemObj.values || itemObj;
+                let obj = { '#': idx + 1 };
+                current.fields.forEach((f, fIdx) => {
+                    obj[f.name] = row[fIdx] !== undefined ? row[fIdx] : '';
+                });
+                exportRows.push(obj);
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(exportRows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, current.name.substring(0, 30));
+            
+            const fileName = `AlMustafa_${current.name}_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
+            showToast('تم تصدير ملف الإكسل المصفى بنجاح!', 'success');
+        };
+    </script>
+</body>
+</html>
